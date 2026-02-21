@@ -36,7 +36,6 @@ export class ProductsController {
     return this.productsService.create(dto);
   }
 
-  @Put(':id')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
