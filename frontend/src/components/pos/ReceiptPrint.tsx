@@ -64,6 +64,19 @@ export function ReceiptPrint({ order }: ReceiptPrintProps) {
         </div>
       </div>
 
+      {order.paymentMethod === 'CASH' && order.cashReceived !== undefined && order.change !== undefined && (
+        <div className="space-y-1.5 mb-4 border-b border-dashed border-gray-400 pb-4 text-xs font-bold">
+          <div className="flex justify-between">
+            <span>รับเงินสด (Cash)</span>
+            <span>฿{Number(order.cashReceived).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="flex justify-between mt-1">
+            <span>เงินทอน (Change)</span>
+            <span>฿{Number(order.change).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+        </div>
+      )}
+
       <div className="text-center text-xs">
         <p>ชำระโดย: {order.paymentMethod === 'CASH' ? 'เงินสด' : order.paymentMethod === 'CREDIT_CARD' ? 'บัตรเครดิต' : 'QR Code'}</p>
         <p className="mt-4 font-bold">ขอบคุณที่ใช้บริการ</p>

@@ -66,6 +66,8 @@ model Order {
   discount      Decimal       @default(0) @db.Decimal(10, 2)
   tax           Decimal       @default(0) @db.Decimal(10, 2)
   total         Decimal       @db.Decimal(10, 2)
+  cashReceived  Decimal?      @db.Decimal(10, 2)
+  change        Decimal?      @db.Decimal(10, 2)
   paymentMethod PaymentMethod @default(CASH)
   status        OrderStatus   @default(COMPLETED)
   note          String?
@@ -83,18 +85,41 @@ model Order {
 }
 
 model Member {
-  id         String     @id @default(uuid())
+  id         String             @id @default(uuid())
   name       String
-  phone      String     @unique
-  points     Int        @default(0)
-  tier       MemberTier @default(BASIC)
-  totalSpent Decimal    @default(0) @db.Decimal(10, 2)
+  phone      String             @unique
+  points     Int                @default(0) // Now acts as a cached total of unexpired points
+  tier       MemberTier         @default(BASIC)
+  totalSpent Decimal            @default(0) @db.Decimal(10, 2)
   lastVisit  DateTime?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
   orders     Order[]
+  pointTxs   PointTransaction[]
 
   @@map("members")
+}
+
+model PointTransaction {
+  id        String          @id @default(uuid())
+  memberId  String
+  member    Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  orderId   String?         // Optional: link to the order that earned/redeemed these points
+  amount    Int             // Positive for EARN, negative for REDEEM/EXPIRE
+  type      PointTxType
+  expiresAt DateTime?       // Null for non-expiring points or for REDEEM transactions
+  balance   Int             // For tracking remaining available points (e.g., if earned 100, used 40, balance=60)
+  createdAt DateTime        @default(now())
+
+  @@map("point_transactions")
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+
+  @@map("settings")
 }
 
 model Promotion {
@@ -198,4 +223,10 @@ enum RewardType {
   DISCOUNT_PERCENT
   FIXED_PRICE
   FREE_ITEM
+}
+
+enum PointTxType {
+  EARN
+  REDEEM
+  EXPIRE
 }

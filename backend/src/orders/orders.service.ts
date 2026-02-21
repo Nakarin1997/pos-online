@@ -1,11 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 import { CreateOrderDto } from './dto/order.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
+  ) {}
 
   async create(dto: CreateOrderDto) {
     return this.prisma.$transaction(async (tx) => {
@@ -157,7 +161,61 @@ export class OrdersService {
       const subtotalBeforeVat = total.div(1.07);
       const tax = total.sub(subtotalBeforeVat);
 
-      return tx.order.create({
+      // --- POINT CALCULATION (EARN) ---
+      let earnedPoints = 0;
+      let expiresAt: Date | undefined;
+      
+      if (dto.memberId) {
+        const pointsPerThbStr = await this.settings.getSettingValue('POINTS_PER_THB');
+        const expiryDaysStr = await this.settings.getSettingValue('POINT_EXPIRY_DAYS');
+        
+        const pointsPerThb = parseFloat(pointsPerThbStr) || 100;
+        const expiryDays = parseInt(expiryDaysStr, 10) || 365;
+        
+        if (pointsPerThb > 0) {
+          earnedPoints = Math.floor(total.toNumber() / pointsPerThb);
+        }
+        
+        if (expiryDays > 0) {
+          expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + expiryDays);
+        }
+      }
+
+      // --- POINT REDEMPTION (FIFO logic) ---
+      const pointsToRedeem = dto.pointsToRedeem || 0;
+      const pointTxsToUpdate: { id: string; balance: number }[] = [];
+
+      if (dto.memberId && pointsToRedeem > 0) {
+        const member = await tx.member.findUnique({ where: { id: dto.memberId } });
+        if (!member || member.points < pointsToRedeem) {
+          throw new BadRequestException('Insufficient points to redeem');
+        }
+
+        const now = new Date();
+        const availablePointTxs = await tx.pointTransaction.findMany({
+          where: {
+            memberId: dto.memberId,
+            balance: { gt: 0 },
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          },
+          orderBy: { expiresAt: 'asc' }, // FIFO: expires soonest first
+        });
+
+        let remainingToDeduct = pointsToRedeem;
+        for (const ptTx of availablePointTxs) {
+          if (remainingToDeduct <= 0) break;
+          const deduction = Math.min(ptTx.balance, remainingToDeduct);
+          remainingToDeduct -= deduction;
+          pointTxsToUpdate.push({ id: ptTx.id, balance: ptTx.balance - deduction });
+        }
+
+        if (remainingToDeduct > 0) {
+          throw new BadRequestException('Not enough unexpired points available');
+        }
+      }
+
+      const order = await tx.order.create({
         data: {
           orderNumber,
           subtotal,
@@ -165,6 +223,8 @@ export class OrdersService {
           tax,
           total,
           paymentMethod: (dto.paymentMethod as any) ?? 'CASH',
+          cashReceived: dto.cashReceived,
+          change: dto.change,
           note: dto.note,
           userId: dto.userId,
           memberId: dto.memberId,
@@ -183,6 +243,49 @@ export class OrdersService {
           member: true,
         },
       });
+
+      // Insert EARN Point Transaction
+      if (dto.memberId && earnedPoints > 0) {
+        await tx.pointTransaction.create({
+          data: {
+            memberId: dto.memberId,
+            orderId: order.id,
+            amount: earnedPoints,
+            type: 'EARN',
+            expiresAt,
+            balance: earnedPoints,
+          },
+        });
+      }
+
+      // Execute Point REDEMPTION updates
+      if (dto.memberId && pointsToRedeem > 0) {
+        for (const ptTx of pointTxsToUpdate) {
+          await tx.pointTransaction.update({
+            where: { id: ptTx.id },
+            data: { balance: ptTx.balance },
+          });
+        }
+        await tx.pointTransaction.create({
+          data: {
+            memberId: dto.memberId,
+            orderId: order.id,
+            amount: -pointsToRedeem,
+            type: 'REDEEM',
+            balance: 0,
+          },
+        });
+      }
+
+      // Update Member total points cache
+      if (dto.memberId && (earnedPoints > 0 || pointsToRedeem > 0)) {
+        await tx.member.update({
+          where: { id: dto.memberId },
+          data: { points: { increment: earnedPoints - pointsToRedeem } },
+        });
+      }
+
+      return order;
     });
   }
 

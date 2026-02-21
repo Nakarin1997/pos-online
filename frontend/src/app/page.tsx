@@ -168,6 +168,8 @@ export default function POSPage() {
     }
   };
 
+  const [pointsToRedeem, setPointsToRedeem] = useState<number>(0);
+  
   const { addOrder } = useOrderStore();
   const { user } = useAuthStore();
 
@@ -177,7 +179,7 @@ export default function POSPage() {
       return;
     }
 
-    const finalTotal = getTotal();
+    const finalTotal = getTotal() - pointsToRedeem;
     
     const payload = {
       items: items.map((item) => ({
@@ -185,11 +187,14 @@ export default function POSPage() {
         quantity: item.quantity,
         unitPrice: item.product.price,
       })),
-      discount,
+      discount: discount + pointsToRedeem, // Treat redeemed points as generic discount on Payload for now, or send separately
       paymentMethod,
       userId: user.id,
       memberId: selectedMember?.id,
+      pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
       promoIds: appliedPromos.map(p => p.id), // Sending multiple promos now
+      cashReceived: paymentMethod === 'CASH' ? cashReceived : undefined,
+      change: paymentMethod === 'CASH' ? Math.max(0, cashReceived - finalTotal) : undefined,
     };
 
     const newOrder = await addOrder(payload);
@@ -573,9 +578,30 @@ export default function POSPage() {
                       )}
                     </div>
                     {selectedMember && (
-                      <div className="mt-2 text-xs text-primary font-medium flex justify-between">
-                        <span>{selectedMember.name} (ระดับ: {selectedMember.tier})</span>
-                        <span>แต้มที่มี: {selectedMember.points.toLocaleString()}</span>
+                      <div className="mt-2 text-xs text-primary font-medium flex-col space-y-2">
+                        <div className="flex justify-between w-full">
+                          <span>{selectedMember.name} (ระดับ: {selectedMember.tier})</span>
+                          <span>แต้มที่มี: {selectedMember.points.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between w-full bg-primary/10 p-2 rounded-lg border border-primary/20">
+                          <label className="text-primary font-bold">ใช้แต้มส่วนลด</label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min={0}
+                              max={selectedMember.points}
+                              value={pointsToRedeem || ''}
+                              onChange={(e) => {
+                                let val = parseInt(e.target.value, 10) || 0;
+                                if (val > selectedMember.points) val = selectedMember.points;
+                                setPointsToRedeem(val);
+                              }}
+                              className="w-16 px-2 py-1 bg-background border border-primary/30 rounded text-center font-mono focus:border-primary outline-none"
+                              placeholder="0"
+                            />
+                            <span>pt</span>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -639,9 +665,15 @@ export default function POSPage() {
                       <span>-฿{discount.toFixed(2)}</span>
                     </div>
                   )}
+                  {pointsToRedeem > 0 && (
+                    <div className="flex justify-between text-primary font-medium">
+                      <span>ใช้แต้มลดราคา ({pointsToRedeem} pt)</span>
+                      <span>-฿{pointsToRedeem.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-muted">
                     <span>มูลค่าก่อน VAT</span>
-                    <span>฿{(getTotal() - getTax()).toFixed(2)}</span>
+                    <span>฿{(getTotal() - getTax() - pointsToRedeem).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-muted">
                     <span>VAT (7%)</span>
@@ -649,7 +681,7 @@ export default function POSPage() {
                   </div>
                   <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
                     <span>ยอดสุทธิ (Total)</span>
-                    <span className="text-primary">฿{getTotal().toFixed(2)}</span>
+                    <span className="text-primary">฿{(getTotal() - pointsToRedeem).toFixed(2)}</span>
                   </div>
                 </div>
 

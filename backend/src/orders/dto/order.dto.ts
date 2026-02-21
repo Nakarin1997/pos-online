@@ -37,9 +37,24 @@ export class CreateOrderDto {
   @IsOptional()
   paymentMethod?: string;
 
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  cashReceived?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  change?: number;
+
   @IsString()
   @IsOptional()
   memberId?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  pointsToRedeem?: number;
 
   @IsArray()
   @IsString({ each: true })

@@ -47,6 +47,8 @@ export interface Order {
   discount: number;
   tax: number;
   total: number;
+  cashReceived?: number;
+  change?: number;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   note?: string;

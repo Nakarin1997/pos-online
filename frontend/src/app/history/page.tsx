@@ -256,6 +256,18 @@ export default function HistoryPage() {
                 <span>รวมทั้งหมด (Total)</span>
                 <span className="text-primary">฿{selectedOrder.total.toFixed(2)}</span>
               </div>
+              {selectedOrder.paymentMethod === 'CASH' && selectedOrder.cashReceived !== undefined && selectedOrder.change !== undefined && selectedOrder.cashReceived !== null && selectedOrder.change !== null && (
+                <div className="pt-2 border-t border-border/50 text-foreground font-semibold">
+                  <div className="flex justify-between">
+                    <span>รับเงินสด (Cash)</span>
+                    <span className="text-foreground">฿{Number(selectedOrder.cashReceived).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span>เงินทอน (Change)</span>
+                    <span className="text-foreground">฿{Number(selectedOrder.change).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
