@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # frontend (Next.js)
+  pos-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pos-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Example ENV for connecting to API
+      # - NEXT_PUBLIC_API_URL=http://localhost:3001
+    depends_on:
+      - pos-backend
+    networks:
+      - pos-network
+
+  # backend (NestJS)
+  pos-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pos-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      # - DATABASE_URL=postgresql://user:password@db:5432/pos?schema=public
+    networks:
+      - pos-network
+
+networks:
+  pos-network:
+    driver: bridge

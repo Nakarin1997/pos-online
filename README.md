@@ -95,6 +95,23 @@ npm install
 npm run start:dev
 ```
 
+### 🐳 4. รันผ่าน Docker (แนะนำสำหรับการ Deploy)
+
+โปรเจกต์นี้รองรับการรันผ่าน Docker Compose เพื่อความเร็วและความสะดวกในการ Deployment ทั้งระบบ Frontend และ Backend ในคำสั่งเดียว
+
+```bash
+# รันระบบเบื้องหลัง (Detached mode)
+docker-compose up -d
+
+# ดู Log การทำงานของระบบ
+docker-compose logs -f
+
+# หยุดการทำงาน
+docker-compose down
+```
+
+> ระบบจะรัน Frontend ที่พอร์ต `http://localhost:3000` และ Backend ที่พอร์ต `http://localhost:3001`
+
 ---
 
 ## 👨‍💻 ข้อมูลติดต่อ (Contact)
