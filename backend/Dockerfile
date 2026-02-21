@@ -26,5 +26,5 @@ COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/prisma ./prisma
 
-EXPOSE 3001
+EXPOSE 3002
 CMD [ "npm", "run", "start:prod" ]
