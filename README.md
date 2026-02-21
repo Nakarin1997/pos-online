@@ -1,6 +1,6 @@
 # POS Online - ระบบจัดการร้านค้าอัจฉริยะ (Point of Sale System)
 
-![POS Preview](./frontend/public/window.svg) <!-- TODO: Add realistic screenshot later -->
+![POS Preview](./frontend/public/preview.png)
 
 ระบบขายหน้าร้าน (POS) แบบครบวงจรที่พัฒนาด้วยเทคโนโลยี Web Application สมัยใหม่ ออกแบบมาให้ใช้งานง่าย รวดเร็ว และตอบโจทย์ธุรกิจขนาดเล็กถึงขนาดกลาง (SMEs) โดยมีฟีเจอร์ที่ครอบคลุมตั้งแต่การขายสินค้า, บริหารสต๊อก, เก็บประวัติการขาย ไปจนถึงหน้าแดชบอร์ดสรุปยอด
 
