@@ -13,7 +13,7 @@ export class SettingsService {
   ];
 
   async getSettings() {
-    const records = await this.prisma.settings.findMany();
+    const records = await this.prisma.setting.findMany();
     const settingsMap = new Map(records.map((r: any) => [r.key, r.value]));
 
     // Merge with defaults
@@ -25,7 +25,7 @@ export class SettingsService {
 
   async updateSettings(updates: Record<string, string>) {
     const promises = Object.entries(updates).map(([key, value]) => {
-      return this.prisma.settings.upsert({
+      return this.prisma.setting.upsert({
         where: { key },
         update: { value },
         create: { key, value },
@@ -37,7 +37,7 @@ export class SettingsService {
   }
 
   async getSettingValue(key: string): Promise<string> {
-    const record = await this.prisma.settings.findUnique({ where: { key } });
+    const record = await this.prisma.setting.findUnique({ where: { key } });
     if (record) return record.value;
     
     // Fallback to default

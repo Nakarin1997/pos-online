@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# POS Online - Frontend
 
-## Getting Started
+The frontend of the POS Online system, built with Next.js 15 and React.
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Storefront POS Interface**: Classic and intuitive checkout flow with real-time calculations.
+- **Advanced Membership System**: Supports point redemption with FIFO logic and dynamic point calculation.
+- **Admin Settings**: A dedicated UI to manage global application settings (Points rules, PromptPay IDs, etc.).
+- **Product Management**: Upload images, manage categories, and generate SKUs.
+- **Sales Analytics**: Interactive charts (Recharts) for monitoring business performance.
+- **Multilingual & Dark Mode**: Full internationalization (TH/EN) and theme switching support.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Charts**: [Recharts](https://recharts.org/)
+- **QR Code**: [promptpay-qr](https://github.com/dtinth/promptpay-qr)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠 Development
 
-## Learn More
+1. Install dependencies:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   bun install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Run the development server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   bun run dev
+   ```
 
-## Deploy on Vercel
+3. Open [http://localhost:3000](http://localhost:3000)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app`: Page routes and layouts.
+- `src/components`: Reusable UI components (POS, Dashboard, etc.).
+- `src/stores`: Zustand state management (Cart, Products, Settings, etc.).
+- `src/lib`: Utility functions and API configuration.
