@@ -8,11 +8,12 @@ interface SettingsState {
   signupBonus: number;
   setPromptPayId: (id: string) => void;
   fetchSettings: () => Promise<void>;
+  updateBackendSettings: (updates: Record<string, string>) => Promise<boolean>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       promptPayId: '0812345678', // Default fallback
       pointsPerThb: 100,
       pointExpiryDays: 365,
@@ -29,6 +30,23 @@ export const useSettingsStore = create<SettingsState>()(
           });
         } catch (error) {
           console.error('Failed to fetch settings:', error);
+        }
+      },
+      updateBackendSettings: async (updates: Record<string, string>) => {
+        try {
+          const res = await fetch('http://localhost:3001/settings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates),
+          });
+          if (res.ok) {
+            await get().fetchSettings();
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Failed to update settings:', error);
+          return false;
         }
       },
     }),

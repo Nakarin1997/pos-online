@@ -31,10 +31,13 @@ export default function POSPage() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
 
+  const { fetchSettings } = useSettingsStore();
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+    fetchSettings();
+  }, [fetchProducts, fetchCategories, fetchSettings]);
 
   // Members and Promotions State
   const members = useMemberStore((state) => state.members);

@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
   { href: "/history", label: "ประวัติ", icon: History },
   { href: "/dashboard", label: "แดชบอร์ด", icon: BarChart3, roles: ["ADMIN", "MANAGER"] },
   { href: "/users", label: "ผู้ใช้", icon: Users, roles: ["ADMIN"] },
+  { href: "/settings", label: "ตั้งค่า", icon: Settings, roles: ["ADMIN"] },
 ];
 
 const roleDisplay: Record<UserRole, { label: string; icon: React.ElementType; color: string }> = {
