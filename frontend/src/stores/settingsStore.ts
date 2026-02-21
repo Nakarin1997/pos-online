@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import api from '../lib/api';
 
 interface SettingsState {
   promptPayId: string;
@@ -21,8 +22,8 @@ export const useSettingsStore = create<SettingsState>()(
       setPromptPayId: (id) => set({ promptPayId: id }),
       fetchSettings: async () => {
         try {
-          const res = await fetch('http://localhost:3001/settings');
-          const data = await res.json();
+          const res = await api.get('/settings');
+          const data = res.data;
           set({
             pointsPerThb: parseInt(data.POINTS_PER_THB, 10) || 100,
             pointExpiryDays: parseInt(data.POINT_EXPIRY_DAYS, 10) || 365,
@@ -34,16 +35,9 @@ export const useSettingsStore = create<SettingsState>()(
       },
       updateBackendSettings: async (updates: Record<string, string>) => {
         try {
-          const res = await fetch('http://localhost:3001/settings', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates),
-          });
-          if (res.ok) {
-            await get().fetchSettings();
-            return true;
-          }
-          return false;
+          await api.patch('/settings', updates);
+          await get().fetchSettings();
+          return true;
         } catch (error) {
           console.error('Failed to update settings:', error);
           return false;
