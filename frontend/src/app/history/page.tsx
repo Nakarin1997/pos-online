@@ -245,11 +245,15 @@ export default function HistoryPage() {
                 </div>
               )}
               <div className="flex justify-between text-muted">
-                <span>VAT 7%</span>
+                <span>มูลค่าก่อน VAT</span>
+                <span>฿{(selectedOrder.total - selectedOrder.tax).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-muted">
+                <span>VAT (7%)</span>
                 <span>฿{selectedOrder.tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
-                <span>รวมทั้งหมด</span>
+                <span>รวมทั้งหมด (Total)</span>
                 <span className="text-primary">฿{selectedOrder.total.toFixed(2)}</span>
               </div>
             </div>

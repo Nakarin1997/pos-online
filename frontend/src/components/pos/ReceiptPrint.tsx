@@ -42,7 +42,7 @@ export function ReceiptPrint({ order }: ReceiptPrintProps) {
       <div className="space-y-1.5 mb-4 border-b border-dashed border-gray-400 pb-4 text-xs">
         <div className="flex justify-between">
           <span>รวมเป็นเงิน</span>
-          <span>฿{order.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <span>฿{order.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
         {order.discount > 0 && (
           <div className="flex justify-between text-red-600">
@@ -51,11 +51,15 @@ export function ReceiptPrint({ order }: ReceiptPrintProps) {
           </div>
         )}
         <div className="flex justify-between">
-          <span>ภาษี (7%)</span>
+          <span>มูลค่าสินค้า (Before VAT)</span>
+          <span>฿{(order.total - order.tax).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
           <span>฿{order.tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
         <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t border-gray-300">
-          <span>ยอดสุทธิ</span>
+          <span>ยอดชำระสุทธิ (Total)</span>
           <span>฿{order.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
       </div>

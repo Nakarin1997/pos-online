@@ -69,16 +69,16 @@ export const useCartStore = create<CartStore>((set, get) => ({
   },
 
   getTax: () => {
-    const subtotal = get().getSubtotal();
-    const discount = get().discount;
-    return (subtotal - discount) * 0.07;
+    const total = get().getTotal();
+    // VAT 7% included in price: VAT = Total - (Total / 1.07)
+    return total - (total / 1.07);
   },
 
   getTotal: () => {
     const subtotal = get().getSubtotal();
     const discount = get().discount;
-    const tax = get().getTax();
-    return subtotal - discount + tax;
+    // Total is simply Subtotal minus Discount because prices already include VAT
+    return subtotal - discount;
   },
 
   getItemCount: () => {

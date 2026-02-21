@@ -463,11 +463,15 @@ export default function POSPage() {
                 </div>
               )}
               <div className="flex justify-between text-muted">
-                <span>VAT 7%</span>
+                <span>มูลค่าสินค้า (Before VAT)</span>
+                <span>฿{(getTotal() - getTax()).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-muted">
+                <span>VAT (7%)</span>
                 <span>฿{getTax().toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
-                <span>รวมทั้งหมด</span>
+                <span>รวมทั้งสิ้น (Total)</span>
                 <span className="text-primary">฿{getTotal().toFixed(2)}</span>
               </div>
             </div>
@@ -636,11 +640,15 @@ export default function POSPage() {
                     </div>
                   )}
                   <div className="flex justify-between text-muted">
-                    <span>VAT 7%</span>
+                    <span>มูลค่าก่อน VAT</span>
+                    <span>฿{(getTotal() - getTax()).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted">
+                    <span>VAT (7%)</span>
                     <span>฿{getTax().toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
-                    <span>{t("pos.cart.total")}</span>
+                    <span>ยอดสุทธิ (Total)</span>
                     <span className="text-primary">฿{getTotal().toFixed(2)}</span>
                   </div>
                 </div>

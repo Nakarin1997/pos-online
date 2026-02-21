@@ -153,8 +153,9 @@ export class OrdersService {
         ? totalDiscount
         : new Prisma.Decimal(dto.discount ?? 0);
 
-      const tax = subtotal.sub(finalDiscount).mul(0.07); // 7% VAT
-      const total = subtotal.sub(finalDiscount).add(tax);
+      const total = subtotal.sub(finalDiscount);
+      const subtotalBeforeVat = total.div(1.07);
+      const tax = total.sub(subtotalBeforeVat);
 
       return tx.order.create({
         data: {
