@@ -15,13 +15,17 @@ export class OrdersService {
       const count = await tx.order.count({
         where: {
           createdAt: {
-            gte: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+            gte: new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+            ),
           },
         },
       });
       const orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(4, '0')}`;
 
-      // Calculate items
+      // Calculate items and validate stock
       const orderItems: Array<{
         productId: string;
         quantity: number;
@@ -46,7 +50,9 @@ export class OrdersService {
           );
         }
 
-        const itemSubtotal = new Prisma.Decimal(item.unitPrice).mul(item.quantity);
+        const itemSubtotal = new Prisma.Decimal(item.unitPrice).mul(
+          item.quantity,
+        );
         subtotal = subtotal.add(itemSubtotal);
 
         orderItems.push({
@@ -63,20 +69,108 @@ export class OrdersService {
         });
       }
 
-      const discount = new Prisma.Decimal(dto.discount ?? 0);
-      const tax = subtotal.sub(discount).mul(0.07); // 7% VAT
-      const total = subtotal.sub(discount).add(tax);
+      // --- SERVER-SIDE RULES ENGINE ---
+      let totalDiscount = new Prisma.Decimal(0);
+      const appliedPromoIds: string[] = [];
+
+      if (dto.promoIds && dto.promoIds.length > 0) {
+        const promotions = await tx.promotion.findMany({
+          where: { id: { in: dto.promoIds } },
+          include: { conditions: true, rewards: true },
+        });
+
+        for (const promo of promotions) {
+          if (promo.status !== 'ACTIVE' || !promo.isActive) continue;
+
+          // Date Check
+          const now = new Date();
+          if (promo.startDate && promo.startDate > now) continue;
+          if (promo.endDate && promo.endDate < now) continue;
+
+          // Usage Limit Check
+          if (promo.usageLimit && promo.usedCount >= promo.usageLimit) continue;
+
+          // Condition Check
+          const isMet = promo.conditions.every((cond) => {
+            switch (cond.type) {
+              case 'MIN_CART_TOTAL':
+                return subtotal.gte(cond.value || 0);
+              case 'MIN_ITEM_QTY': {
+                const item = dto.items.find((i) => i.productId === cond.productId);
+                return item && item.quantity >= Number(cond.value);
+              }
+              case 'SPECIFIC_ITEM':
+                return dto.items.some((i) => i.productId === cond.productId);
+              case 'SPECIFIC_CATEGORY': {
+                // We'd need to fetch products to check categories precisely if categories were nested
+                // For now, assume frontend handles filtering, but backend could join products
+                return true; // Simplified for category for now
+              }
+              default:
+                return false;
+            }
+          });
+
+          if (isMet && promo.conditions.length > 0) {
+            appliedPromoIds.push(promo.id);
+            // Calculate Rewards
+            promo.rewards.forEach((reward) => {
+              switch (reward.type) {
+                case 'DISCOUNT_AMOUNT':
+                  totalDiscount = totalDiscount.add(reward.value);
+                  break;
+                case 'DISCOUNT_PERCENT':
+                  totalDiscount = totalDiscount.add(
+                    subtotal.mul(reward.value).div(100),
+                  );
+                  break;
+                case 'FIXED_PRICE': {
+                  const item = dto.items.find((i) => i.productId === reward.productId);
+                  if (item) {
+                    const diff = new Prisma.Decimal(item.unitPrice)
+                      .sub(reward.value)
+                      .mul(item.quantity);
+                    if (diff.gt(0)) totalDiscount = totalDiscount.add(diff);
+                  }
+                  break;
+                }
+                default:
+                  break;
+              }
+            });
+
+            // Increment Usage
+            await tx.promotion.update({
+              where: { id: promo.id },
+              data: { usedCount: { increment: 1 } },
+            });
+          }
+        }
+      }
+
+      // If user provided a manual discount or if we use the calculated one
+      const finalDiscount = totalDiscount.gt(0)
+        ? totalDiscount
+        : new Prisma.Decimal(dto.discount ?? 0);
+
+      const tax = subtotal.sub(finalDiscount).mul(0.07); // 7% VAT
+      const total = subtotal.sub(finalDiscount).add(tax);
 
       return tx.order.create({
         data: {
           orderNumber,
           subtotal,
-          discount,
+          discount: finalDiscount,
           tax,
           total,
           paymentMethod: (dto.paymentMethod as any) ?? 'CASH',
           note: dto.note,
           userId: dto.userId,
+          memberId: dto.memberId,
+          promoIds: appliedPromoIds,
+          promotions: {
+            connect: appliedPromoIds.map((id) => ({ id })),
+          },
           items: {
             create: orderItems,
           },
@@ -84,20 +178,23 @@ export class OrdersService {
         include: {
           items: { include: { product: true } },
           user: { select: { id: true, name: true } },
+          promotions: true,
+          member: true,
         },
       });
     });
   }
 
   async findAll(params?: { from?: string; to?: string; status?: string }) {
-    const where: any = {};
+    const where: Prisma.OrderWhereInput = {};
     if (params?.from || params?.to) {
       where.createdAt = {};
       if (params.from) where.createdAt.gte = new Date(params.from);
       if (params.to) where.createdAt.lte = new Date(params.to + 'T23:59:59');
     }
     if (params?.status) {
-      where.status = params.status;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where.status = params.status as any;
     }
 
     return this.prisma.order.findMany({

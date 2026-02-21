@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Eye, XCircle, Calendar, Filter, Printer } from "lucide-react";
 import { Order } from "@/types";
 import { ReceiptPrint } from "@/components/pos/ReceiptPrint";
@@ -21,14 +21,40 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function HistoryPage() {
-  const { orders } = useOrderStore();
+  const { orders, fetchOrders } = useOrderStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "this-week" | "this-month">("today");
+  const [statusFilter, setStatusFilter] = useState<"all" | "COMPLETED" | "CANCELLED" | "REFUNDED">("all");
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
 
-  const filtered = orders.filter(
-    (o) =>
-      o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const filtered = orders.filter((o) => {
+    const matchSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchStatus = statusFilter === "all" || o.status === statusFilter;
+    
+    let matchDate = true;
+    if (dateFilter !== "all") {
+      const orderDate = new Date(o.createdAt);
+      const today = new Date();
+      if (dateFilter === "today") {
+        matchDate = orderDate.toDateString() === today.toDateString();
+      } else if (dateFilter === "this-week") {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        matchDate = orderDate >= startOfWeek;
+      } else if (dateFilter === "this-month") {
+        matchDate = orderDate.getMonth() === today.getMonth() && orderDate.getFullYear() === today.getFullYear();
+      }
+    }
+    
+    return matchSearch && matchStatus && matchDate;
+  });
 
   return (
     <div className="p-6 animate-fade-in">
@@ -52,14 +78,33 @@ export default function HistoryPage() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-border text-foreground placeholder-muted text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 glass rounded-xl text-sm text-muted hover:text-foreground transition-all">
+        <button 
+          onClick={() => {
+             const nextDate = dateFilter === 'all' ? 'today' : dateFilter === 'today' ? 'this-week' : dateFilter === 'this-week' ? 'this-month' : 'all';
+             setDateFilter(nextDate);
+          }} 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm transition-all ${dateFilter !== 'all' ? 'bg-primary text-white shadow-md' : 'glass text-muted hover:text-foreground'}`}
+        >
           <Calendar className="w-4 h-4" />
-          วันนี้
+          {dateFilter === 'all' ? 'ทุกวัน' : dateFilter === 'today' ? 'วันนี้' : dateFilter === 'this-week' ? 'สัปดาห์นี้' : 'เดือนนี้'}
         </button>
-        <button className="flex items-center gap-2 px-4 py-2.5 glass rounded-xl text-sm text-muted hover:text-foreground transition-all">
-          <Filter className="w-4 h-4" />
-          กรอง
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setShowStatusFilter(!showStatusFilter)} 
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm transition-all ${statusFilter !== 'all' ? 'bg-primary text-white shadow-md' : 'glass text-muted hover:text-foreground'}`}
+          >
+            <Filter className="w-4 h-4" />
+            {statusFilter === 'all' ? 'ทุกสถานะ' : statusConfig[statusFilter].label}
+          </button>
+          {showStatusFilter && (
+            <div className="absolute right-0 mt-2 w-40 glass rounded-xl shadow-lg border border-border overflow-hidden z-10 animate-fade-in">
+              <button onClick={() => { setStatusFilter("all"); setShowStatusFilter(false); }} className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface-hover transition-colors">ทุกสถานะ</button>
+              <button onClick={() => { setStatusFilter("COMPLETED"); setShowStatusFilter(false); }} className="block w-full text-left px-4 py-2 text-sm text-success hover:bg-success/10 transition-colors">สำเร็จ</button>
+              <button onClick={() => { setStatusFilter("CANCELLED"); setShowStatusFilter(false); }} className="block w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger/10 transition-colors">ยกเลิก</button>
+              <button onClick={() => { setStatusFilter("REFUNDED"); setShowStatusFilter(false); }} className="block w-full text-left px-4 py-2 text-sm text-orange-500 hover:bg-orange-500/10 transition-colors">คืนเงิน</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Orders Table */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Search, X, Check, ShieldCheck, User as UserIcon, Briefcase } from "lucide-react";
 import { useUserStore, User } from "@/stores/userStore";
 import { UserRole } from "@/stores/authStore";
@@ -16,15 +16,19 @@ const defaultForm: Omit<User, 'id' | 'createdAt'> = {
   email: "",
   role: "CASHIER",
   password: "",
-  status: "ACTIVE",
+  isActive: true,
 };
 
 export default function UsersPage() {
-  const { users, addUser, updateUser, deleteUser } = useUserStore();
+  const { users, fetchUsers, addUser, updateUser, deleteUser } = useUserStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState(defaultForm);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const filteredUsers = users.filter(
     (u) =>
@@ -45,34 +49,34 @@ export default function UsersPage() {
       name: user.name,
       email: user.email,
       role: user.role,
-      password: user.password || "",
-      status: user.status,
+      password: "", // Don't show existing password
+      isActive: user.isActive,
     });
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (!formData.name || !formData.email || !formData.password) {
+  const handleSave = async () => {
+    if (!formData.name || !formData.email || (!editingUser && !formData.password)) {
       alert("กรุณากรอกข้อมูลให้ครบและกำหนดรหัสผ่าน");
       return;
     }
 
     if (editingUser) {
-      updateUser(editingUser.id, formData);
+      await updateUser(editingUser.id, formData);
     } else {
       // Check duplicate email
       if (users.some((u) => u.email === formData.email)) {
         alert("อีเมลนี้มีในระบบแล้ว");
         return;
       }
-      addUser(formData);
+      await addUser(formData);
     }
     setShowModal(false);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`คุณต้องการลบผู้ใช้ "${name}" ใช่หรือไม่?`)) {
-      deleteUser(id);
+      await deleteUser(id);
     }
   };
 
@@ -140,8 +144,8 @@ export default function UsersPage() {
                 <span className={`px-2.5 py-1 rounded-md font-medium ${roleIcons[user.role].bg} ${roleIcons[user.role].color}`}>
                   {user.role}
                 </span>
-                <span className={`px-2 py-0.5 rounded-full font-medium ${user.status === 'ACTIVE' ? 'bg-success/20 text-success' : 'bg-muted/20 text-muted'}`}>
-                  {user.status === 'ACTIVE' ? 'ใช้งาน' : 'ระงับการใช้งาน'}
+                <span className={`px-2 py-0.5 rounded-full font-medium ${user.isActive ? 'bg-success/20 text-success' : 'bg-muted/20 text-muted'}`}>
+                  {user.isActive ? 'ใช้งาน' : 'ระงับการใช้งาน'}
                 </span>
               </div>
             </div>
@@ -215,12 +219,12 @@ export default function UsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-muted mb-1">สถานะ</label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' })}
+                    value={formData.isActive ? "true" : "false"}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
                     className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground outline-none"
                   >
-                    <option value="ACTIVE">ใช้งาน</option>
-                    <option value="INACTIVE">ระงับ</option>
+                    <option value="true">ใช้งาน</option>
+                    <option value="false">ระงับ</option>
                   </select>
                 </div>
               </div>

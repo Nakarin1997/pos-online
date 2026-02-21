@@ -30,9 +30,10 @@ model Category {
   description String?
   color       String    @default("#6366f1")
   isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   products    Product[]
+  conditions  PromotionCondition[]
 
   @@map("categories")
 }
@@ -48,10 +49,12 @@ model Product {
   image      String?
   isActive   Boolean     @default(true)
   categoryId String
-  category   Category    @relation(fields: [categoryId], references: [id])
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  category   Category             @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
   orderItems OrderItem[]
+  conditions PromotionCondition[]
+  rewards    PromotionReward[]
 
   @@map("products")
 }
@@ -68,11 +71,75 @@ model Order {
   note          String?
   userId        String
   user          User          @relation(fields: [userId], references: [id])
+  memberId      String?
+  member        Member?       @relation(fields: [memberId], references: [id])
+  promoIds      String[]      @default([])
+  promotions    Promotion[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   items         OrderItem[]
 
   @@map("orders")
+}
+
+model Member {
+  id         String     @id @default(uuid())
+  name       String
+  phone      String     @unique
+  points     Int        @default(0)
+  tier       MemberTier @default(BASIC)
+  totalSpent Decimal    @default(0) @db.Decimal(10, 2)
+  lastVisit  DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  orders     Order[]
+
+  @@map("members")
+}
+
+model Promotion {
+  id          String               @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  usageLimit  Int?
+  usedCount   Int                  @default(0)
+  isActive    Boolean              @default(true)
+  status      PromoStatus          @default(ACTIVE)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  conditions  PromotionCondition[]
+  rewards     PromotionReward[]
+  orders      Order[]
+
+  @@map("promotions")
+}
+
+model PromotionCondition {
+  id          String        @id @default(uuid())
+  promotionId String
+  promotion   Promotion     @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  type        ConditionType
+  productId   String?
+  product     Product?      @relation(fields: [productId], references: [id])
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  value       Decimal?      @db.Decimal(10, 2) // Qty, Amount, etc.
+  
+  @@map("promotion_conditions")
+}
+
+model PromotionReward {
+  id          String      @id @default(uuid())
+  promotionId String
+  promotion   Promotion   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  type        RewardType
+  productId   String?
+  product     Product?    @relation(fields: [productId], references: [id])
+  value       Decimal     @db.Decimal(10, 2) // Discount amount, percent, fixed price, or qty of free items
+
+  @@map("promotion_rewards")
 }
 
 model OrderItem {
@@ -105,4 +172,30 @@ enum OrderStatus {
   COMPLETED
   CANCELLED
   REFUNDED
+}
+
+enum MemberTier {
+  BASIC
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum PromoStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ConditionType {
+  MIN_CART_TOTAL
+  MIN_ITEM_QTY
+  SPECIFIC_ITEM
+  SPECIFIC_CATEGORY
+}
+
+enum RewardType {
+  DISCOUNT_AMOUNT
+  DISCOUNT_PERCENT
+  FIXED_PRICE
+  FREE_ITEM
 }

@@ -40,7 +40,7 @@ export default function LoginPage() {
     // Simulate network delay
     await new Promise((res) => setTimeout(res, 500));
 
-    const success = login(email, password);
+    const success = await login(email, password);
     setIsLoading(false);
     if (success) {
       router.replace("/");
@@ -53,7 +53,7 @@ export default function LoginPage() {
     setIsLoading(true);
     clearError();
     await new Promise((res) => setTimeout(res, 400));
-    const success = login(acc.email, acc.password);
+    const success = await login(acc.email, acc.password);
     setIsLoading(false);
     if (success) {
       router.replace("/");

@@ -18,10 +18,13 @@ import {
   Briefcase,
   Moon,
   Sun,
+  Settings,
 } from "lucide-react";
+import { useState } from "react";
 import { useAuthStore, UserRole } from "@/stores/authStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { useLanguageStore } from "@/stores/languageStore";
+import SettingsModal from "./SettingsModal";
 
 interface NavItem {
   href: string;
@@ -52,6 +55,7 @@ export default function Sidebar() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage, t } = useLanguageStore();
+  const [showSettings, setShowSettings] = useState(false);
 
   // Don't show sidebar on login page or when not authenticated
   if (!isAuthenticated || pathname === "/login") return null;
@@ -121,7 +125,7 @@ export default function Sidebar() {
           {language.toUpperCase()}
         </button>
 
-        {/* Role badge */}
+        {/* User Role Badge */}
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center mt-2"
           style={{ background: `${role.color}20` }}
@@ -133,6 +137,18 @@ export default function Sidebar() {
           {user?.name}
         </span>
 
+        {/* Global Settings (Admin Only) */}
+        {userRole === "ADMIN" && (
+          <button
+            onClick={() => setShowSettings(true)}
+            className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all mt-2"
+            title="ตั้งค่าระบบ"
+          >
+            <Settings className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-medium">ตั้งค่า</span>
+          </button>
+        )}
+
         {/* Logout */}
         <button
           onClick={logout}
@@ -143,6 +159,8 @@ export default function Sidebar() {
           <span className="text-[9px] font-medium">{t('nav.logout')}</span>
         </button>
       </div>
+
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </aside>
   );
 }

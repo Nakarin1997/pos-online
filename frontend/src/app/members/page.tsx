@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Search, X, Check, Award, Phone } from "lucide-react";
 import { useMemberStore, Member, MemberTier } from "@/stores/memberStore";
 
@@ -17,11 +17,15 @@ const defaultForm: Omit<Member, 'id' | 'points' | 'tier' | 'totalSpent' | 'lastV
 };
 
 export default function MembersPage() {
-  const { members, addMember, updateMember, deleteMember } = useMemberStore();
+  const { members, fetchMembers, addMember, updateMember, deleteMember } = useMemberStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [formData, setFormData] = useState(defaultForm);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
 
   const filteredMembers = members.filter(
     (m) =>
@@ -44,27 +48,27 @@ export default function MembersPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.phone) {
       alert("กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบถ้วน");
       return;
     }
 
     if (editingMember) {
-      updateMember(editingMember.id, formData);
+      await updateMember(editingMember.id, formData);
     } else {
       if (members.some((m) => m.phone === formData.phone)) {
         alert("เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว");
         return;
       }
-      addMember(formData);
+      await addMember(formData);
     }
     setShowModal(false);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`คุณต้องการลบสมาชิก "${name}" ใช่หรือไม่?`)) {
-      deleteMember(id);
+      await deleteMember(id);
     }
   };
 

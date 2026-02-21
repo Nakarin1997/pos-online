@@ -19,7 +19,8 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(3001);
-  console.log('🚀 POS Backend running on http://localhost:3001');
+  await app.listen(3002);
+  console.log('🚀 POS Backend running on http://localhost:3002');
 }
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap();

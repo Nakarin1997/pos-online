@@ -30,10 +30,31 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      # - DATABASE_URL=postgresql://user:password@db:5432/pos?schema=public
+      - DATABASE_URL=postgresql://posuser:pospassword@pos-db:5432/posdb?schema=posdb
+    depends_on:
+      - pos-db
+    networks:
+      - pos-network
+
+  # database (PostgreSQL)
+  pos-db:
+    image: postgres:15-alpine
+    container_name: pos-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=posuser
+      - POSTGRES_PASSWORD=pospassword
+      - POSTGRES_DB=posdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pos-db-data:/var/lib/postgresql/data
     networks:
       - pos-network
 
 networks:
   pos-network:
     driver: bridge
+
+volumes:
+  pos-db-data:

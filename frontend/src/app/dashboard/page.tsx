@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   DollarSign,
   ShoppingCart,
@@ -10,8 +11,11 @@ import {
   ArrowUpRight,
   Calendar,
   Download,
+  BarChart as BarChartIcon
 } from "lucide-react";
 import {
+  LineChart,
+  Line,
   BarChart,
   Bar,
   XAxis,
@@ -276,15 +280,17 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {summaryCards.map((card) => {
           const Icon = card.icon;
-          const isClickable = card.id === 'REVENUE' || card.id === 'ORDERS';
-          const isActive = isClickable && chartMetric === card.id;
-          return (
+          const isChartToggle = card.id === 'REVENUE' || card.id === 'ORDERS';
+          const isLink = card.id === 'PRODUCTS' || card.id === 'LOW_STOCK';
+          const isActive = isChartToggle && chartMetric === card.id;
+
+          const CardContent = (
             <div
-              key={card.title}
-              onClick={() => isClickable && setChartMetric(card.id as 'REVENUE' | 'ORDERS')}
-              className={`glass rounded-2xl p-5 bg-gradient-to-br ${card.gradient} transition-all duration-200 
-                ${isClickable ? 'cursor-pointer hover:scale-[1.02]' : ''} 
+              className={`glass rounded-2xl p-5 bg-gradient-to-br ${card.gradient} transition-all duration-200 h-full
+                ${isChartToggle ? 'cursor-pointer hover:scale-[1.02]' : ''} 
+                ${isLink ? 'cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:ring-2 hover:ring-primary/50' : ''}
                 ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+              onClick={() => isChartToggle && setChartMetric(card.id as 'REVENUE' | 'ORDERS')}
             >
               <div className="flex items-start justify-between mb-3">
                 <div
@@ -307,16 +313,54 @@ export default function DashboardPage() {
               <p className="text-xs text-muted mt-1">{card.title}</p>
             </div>
           );
+
+          if (isLink) {
+            return (
+              <Link href="/products" key={card.title} className="block">
+                {CardContent}
+              </Link>
+            );
+          }
+
+          return <div key={card.title}>{CardContent}</div>;
         })}
       </div>
 
-      {/* Sales Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div className="glass rounded-2xl p-5 lg:col-span-2">
+      {/* Sales Charts Row 1: Line and Bar */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Line Chart */}
+        <div className="glass rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp className="w-5 h-5 text-primary" />
             <h2 className="font-bold text-foreground">
-              {chartMetric === 'REVENUE' ? 'ยอดขายรวม' : 'จำนวนออเดอร์'} ({filterLabels[timeFilter]})
+              แนวโน้ม ({chartMetric === 'REVENUE' ? 'ยอดขาย' : 'ออเดอร์'})
+            </h2>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3b82f620" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#8b8bb5' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#8b8bb5' }} tickFormatter={(value) => chartMetric === 'REVENUE' ? `฿${value}` : value} />
+                <Tooltip
+                  cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '3 3' }}
+                  contentStyle={{ backgroundColor: '#1e1e2d', borderColor: '#2b2b40', borderRadius: '12px', color: '#fff' }}
+                  itemStyle={{ color: '#6366f1', fontWeight: 'bold' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any) => [chartMetric === 'REVENUE' ? `฿${Number(value || 0).toFixed(2)}` : value, chartMetric === 'REVENUE' ? 'ยอดขาย' : 'จำนวนออเดอร์']}
+                />
+                <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, fill: '#1e1e2d', strokeWidth: 2, stroke: '#6366f1' }} activeDot={{ r: 6, strokeWidth: 0, fill: '#6366f1' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Bar Chart */}
+        <div className="glass rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-6">
+            <BarChartIcon className="w-5 h-5 text-indigo-400" />
+            <h2 className="font-bold text-foreground">
+              เปรียบเทียบ ({chartMetric === 'REVENUE' ? 'ยอดขาย' : 'ออเดอร์'})
             </h2>
           </div>
           <div className="h-[300px] w-full">
@@ -328,63 +372,20 @@ export default function DashboardPage() {
                 <Tooltip
                   cursor={{ fill: '#6366f115' }}
                   contentStyle={{ backgroundColor: '#1e1e2d', borderColor: '#2b2b40', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#6366f1', fontWeight: 'bold' }}
+                  itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [chartMetric === 'REVENUE' ? `฿${Number(value || 0).toFixed(2)}` : value, chartMetric === 'REVENUE' ? 'ยอดขาย' : 'จำนวนออเดอร์']}
                 />
-                <Bar dataKey="total" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={timeFilter === 'MONTH' ? 12 : 30} />
+                <Bar dataKey="total" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={timeFilter === 'MONTH' ? 12 : 30} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-        
-        {/* Pie Chart */}
-        <div className="glass rounded-2xl p-5">
-           <div className="flex items-center gap-2 mb-6">
-            <Package className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-foreground">
-              สัดส่วนสินค้า ({chartMetric === 'REVENUE' ? 'จากยอดขาย' : 'จากจำนวนที่ขาย'})
-            </h2>
-          </div>
-          <div className="h-[300px] w-full">
-            {productPieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={productPieData}
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {productPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e1e2d', borderColor: '#2b2b40', borderRadius: '12px', color: '#fff' }}
-                    itemStyle={{ fontWeight: 'bold' }}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [chartMetric === 'REVENUE' ? `฿${Number(value || 0).toFixed(2)}` : `${value} ชิ้น`, '']}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted text-sm">
-                ไม่มีข้อมูลการขาย
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Top Products */}
-        <div className="lg:col-span-2 glass rounded-2xl p-5">
+        <div className="lg:col-span-1 glass rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-primary" />
             <h2 className="font-bold text-foreground">สินค้าขายดี (30 วัน)</h2>
@@ -410,11 +411,57 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-xs text-muted">ขายแล้ว {product.sold} ชิ้น</p>
                 </div>
-                <span className="font-semibold text-sm text-primary">
+                <span className="font-semibold text-xs text-primary">
                   ฿{product.revenue.toLocaleString()}
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+        
+        {/* Pie Chart */}
+        <div className="glass rounded-2xl p-5">
+           <div className="flex items-center gap-2 mb-6">
+            <Package className="w-5 h-5 text-primary" />
+            <h2 className="font-bold text-foreground">
+              สัดส่วนสินค้า ({chartMetric === 'REVENUE' ? 'จากยอดขาย' : 'จากจำนวนที่ขาย'})
+            </h2>
+          </div>
+          <div className="h-[300px] w-full">
+            {productPieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={productPieData}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                    stroke="none"
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    labelLine={{ stroke: '#8b8bb5', strokeWidth: 1 }}
+                  >
+                    {productPieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e1e2d', borderColor: '#2b2b40', borderRadius: '12px', color: '#fff' }}
+                    itemStyle={{ color: '#f8fafc', fontWeight: 'bold' }}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={(value: any) => [chartMetric === 'REVENUE' ? `฿${Number(value || 0).toFixed(2)}` : `${value} ชิ้น`, '']}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px', color: '#f8fafc' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted text-sm">
+                ไม่มีข้อมูลการขาย
+              </div>
+            )}
           </div>
         </div>
 

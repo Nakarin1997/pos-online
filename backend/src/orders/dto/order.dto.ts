@@ -39,6 +39,15 @@ export class CreateOrderDto {
 
   @IsString()
   @IsOptional()
+  memberId?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  promoIds?: string[];
+
+  @IsString()
+  @IsOptional()
   note?: string;
 
   @IsString()

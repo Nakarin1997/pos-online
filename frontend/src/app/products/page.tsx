@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -38,7 +38,7 @@ const emptyForm: ProductFormData = {
 };
 
 export default function ProductsPage() {
-  const { products, categories, addProduct, updateProduct, deleteProduct, generateNextSku, addCategory, updateCategory, deleteCategory } = useProductStore();
+  const { products, categories, addProduct, updateProduct, deleteProduct, generateNextSku, addCategory, updateCategory, deleteCategory, fetchProducts, fetchCategories } = useProductStore();
   const { t } = useLanguageStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -50,6 +50,11 @@ export default function ProductsPage() {
   const [categoryData, setCategoryData] = useState({ name: "", color: "#22c55e" });
   const [deleteConfirm, setDeleteConfirm] = useState<Product | null>(null);
   const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState<Category | null>(null);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const filtered = products.filter((p) => {
     const matchSearch =
@@ -102,11 +107,11 @@ export default function ProductsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = () => {
-    if (!formData.name || !formData.sku || !formData.price || !formData.categoryId) return;
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.price || !formData.categoryId) return; // Note SDK usually handled by generateNextSku
 
     if (editingProduct) {
-      updateProduct(editingProduct.id, {
+      await updateProduct(editingProduct.id, {
         name: formData.name,
         sku: formData.sku,
         barcode: formData.barcode || undefined,
@@ -117,7 +122,7 @@ export default function ProductsPage() {
         image: formData.image || undefined,
       });
     } else {
-      addProduct({
+      await addProduct({
         name: formData.name,
         sku: formData.sku,
         barcode: formData.barcode || undefined,
@@ -134,19 +139,19 @@ export default function ProductsPage() {
     setFormData(emptyForm);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteConfirm) {
-      deleteProduct(deleteConfirm.id);
+      await deleteProduct(deleteConfirm.id);
       setDeleteConfirm(null);
     }
   };
 
-  const handleCategorySubmit = () => {
+  const handleCategorySubmit = async () => {
     if (!categoryData.name) return;
     if (editingCategory) {
-      updateCategory(editingCategory.id, categoryData);
+      await updateCategory(editingCategory.id, categoryData);
     } else {
-      addCategory({ name: categoryData.name, color: categoryData.color, isActive: true });
+      await addCategory({ name: categoryData.name, color: categoryData.color, isActive: true });
     }
     setCategoryData({ name: "", color: "#22c55e" });
     setEditingCategory(null);
@@ -161,9 +166,9 @@ export default function ProductsPage() {
     setDeleteCategoryConfirm(cat);
   };
 
-  const confirmCategoryDelete = () => {
+  const confirmCategoryDelete = async () => {
     if (deleteCategoryConfirm) {
-      deleteCategory(deleteCategoryConfirm.id);
+      await deleteCategory(deleteCategoryConfirm.id);
       setDeleteCategoryConfirm(null);
     }
   };

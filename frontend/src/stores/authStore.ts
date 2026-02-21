@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '../lib/api';
 
 export type UserRole = 'ADMIN' | 'CASHIER' | 'MANAGER';
 
@@ -8,13 +9,11 @@ export interface AuthUser {
   email: string;
   role: UserRole;
 }
-
-import { useUserStore } from './userStore';
 interface AuthStore {
   user: AuthUser | null;
   isAuthenticated: boolean;
   error: string | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   clearError: () => void;
 }
@@ -24,28 +23,29 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isAuthenticated: false,
   error: null,
 
-  login: (email, password) => {
-    const users = useUserStore.getState().users;
-    const found = users.find(
-      (u) => u.email === email && u.password === password && u.status === 'ACTIVE'
-    );
-    if (found) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...user } = found;
+  login: async (email, password) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { access_token, user } = response.data;
+      
       set({ user, isAuthenticated: true, error: null });
       if (typeof window !== 'undefined') {
+        localStorage.setItem('pos_token', access_token);
         localStorage.setItem('pos_user', JSON.stringify(user));
       }
       return true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      set({ error: error.response?.data?.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+      return false;
     }
-    set({ error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
-    return false;
   },
 
   logout: () => {
     set({ user: null, isAuthenticated: false, error: null });
     if (typeof window !== 'undefined') {
       localStorage.removeItem('pos_user');
+      localStorage.removeItem('pos_token');
     }
   },
 

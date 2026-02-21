@@ -1,6 +1,9 @@
-FROM node:18-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
 
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -11,9 +14,12 @@ COPY . .
 
 RUN npm run build
 
-FROM node:18-alpine
+FROM node:20-slim
 
 WORKDIR /usr/src/app
+
+# Install OpenSSL for runtime Prisma
+RUN apt-get update -y && apt-get install -y openssl
 
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/package*.json ./

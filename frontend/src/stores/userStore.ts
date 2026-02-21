@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { UserRole } from './authStore';
+import api from '../lib/api';
 
 export interface User {
   id: string;
@@ -7,32 +8,56 @@ export interface User {
   email: string;
   role: UserRole;
   password?: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  isActive: boolean;
   createdAt: string;
 }
 
-const initialUsers: User[] = [
-  { id: 'u1', name: 'Admin', email: 'admin@pos.com', role: 'ADMIN', password: 'admin123', status: 'ACTIVE', createdAt: new Date().toISOString() },
-  { id: 'u2', name: 'แคชเชียร์ สมชาย', email: 'cashier@pos.com', role: 'CASHIER', password: 'cashier123', status: 'ACTIVE', createdAt: new Date().toISOString() },
-  { id: 'u3', name: 'ผู้จัดการ สมหญิง', email: 'manager@pos.com', role: 'MANAGER', password: 'manager123', status: 'ACTIVE', createdAt: new Date().toISOString() },
-];
-
 interface UserStore {
   users: User[];
-  addUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
-  updateUser: (id: string, user: Partial<User>) => void;
-  deleteUser: (id: string) => void;
+  fetchUsers: () => Promise<void>;
+  addUser: (user: Omit<User, 'id' | 'createdAt' | 'isActive'>) => Promise<boolean>;
+  updateUser: (id: string, user: Partial<User>) => Promise<boolean>;
+  deleteUser: (id: string) => Promise<boolean>;
 }
 
-export const useUserStore = create<UserStore>((set) => ({
-  users: initialUsers,
-  addUser: (user) => set((state) => ({
-    users: [...state.users, { ...user, id: `u${Date.now()}`, createdAt: new Date().toISOString() }]
-  })),
-  updateUser: (id, data) => set((state) => ({
-    users: state.users.map((u) => u.id === id ? { ...u, ...data } : u)
-  })),
-  deleteUser: (id) => set((state) => ({
-    users: state.users.filter((u) => u.id !== id)
-  })),
+export const useUserStore = create<UserStore>((set, get) => ({
+  users: [],
+  fetchUsers: async () => {
+    try {
+      const res = await api.get('/users');
+      set({ users: res.data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  addUser: async (user) => {
+    try {
+      const res = await api.post('/users', user);
+      set({ users: [...get().users, res.data] });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
+  updateUser: async (id, data) => {
+    try {
+      const res = await api.patch(`/users/${id}`, data);
+      set({ users: get().users.map((u) => (u.id === id ? res.data : u)) });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
+  deleteUser: async (id) => {
+    try {
+      await api.delete(`/users/${id}`);
+      set({ users: get().users.filter((u) => u.id !== id) });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
 }));

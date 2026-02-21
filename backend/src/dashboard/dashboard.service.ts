@@ -8,7 +8,11 @@ export class DashboardService {
 
   async getSummary() {
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
     const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
     // Today's orders

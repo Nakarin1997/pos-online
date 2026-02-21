@@ -1,42 +1,85 @@
 import { create } from 'zustand';
+import api from '../lib/api';
 
-export type PromoType = 'DISCOUNT_PERCENT' | 'DISCOUNT_AMOUNT';
+export type ConditionType = 'MIN_CART_TOTAL' | 'MIN_ITEM_QTY' | 'SPECIFIC_ITEM' | 'SPECIFIC_CATEGORY';
+export type RewardType = 'DISCOUNT_AMOUNT' | 'DISCOUNT_PERCENT' | 'FIXED_PRICE' | 'FREE_ITEM';
+
+export interface PromotionCondition {
+  id?: string;
+  type: ConditionType;
+  productId?: string;
+  categoryId?: string;
+  value?: number;
+}
+
+export interface PromotionReward {
+  id?: string;
+  type: RewardType;
+  productId?: string;
+  value: number;
+}
 
 export interface Promotion {
   id: string;
   name: string;
-  type: PromoType;
-  value: number; // For percent (e.g., 10 for 10%), for amount (e.g., 50 for 50฿)
-  minSpend: number;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  usageLimit?: number;
+  usedCount: number;
+  isActive: boolean;
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
+  conditions: PromotionCondition[];
+  rewards: PromotionReward[];
 }
-
-const initialPromotions: Promotion[] = [
-  { id: 'p1', name: 'ลด 10% เมื่อซื้อครบ 500฿', type: 'DISCOUNT_PERCENT', value: 10, minSpend: 500, status: 'ACTIVE', createdAt: new Date().toISOString() },
-  { id: 'p2', name: 'ส่วนลด 50฿ ท้ายบิล', type: 'DISCOUNT_AMOUNT', value: 50, minSpend: 300, status: 'ACTIVE', createdAt: new Date().toISOString() },
-];
 
 interface PromoStore {
   promotions: Promotion[];
-  addPromotion: (promo: Omit<Promotion, 'id' | 'createdAt'>) => void;
-  updatePromotion: (id: string, data: Partial<Promotion>) => void;
-  deletePromotion: (id: string) => void;
+  fetchPromotions: () => Promise<void>;
+  addPromotion: (promo: Omit<Promotion, 'id' | 'createdAt' | 'usedCount'>) => Promise<boolean>;
+  updatePromotion: (id: string, data: Partial<Promotion>) => Promise<boolean>;
+  deletePromotion: (id: string) => Promise<boolean>;
 }
 
-export const usePromoStore = create<PromoStore>((set) => ({
-  promotions: initialPromotions,
-  addPromotion: (promo) => set((state) => ({
-    promotions: [...state.promotions, { 
-      ...promo, 
-      id: `p${Date.now()}`, 
-      createdAt: new Date().toISOString() 
-    }]
-  })),
-  updatePromotion: (id, data) => set((state) => ({
-    promotions: state.promotions.map((p) => p.id === id ? { ...p, ...data } : p)
-  })),
-  deletePromotion: (id) => set((state) => ({
-    promotions: state.promotions.filter((p) => p.id !== id)
-  }))
+export const usePromoStore = create<PromoStore>((set, get) => ({
+  promotions: [],
+  fetchPromotions: async () => {
+    try {
+      const res = await api.get('/promotions');
+      set({ promotions: res.data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  addPromotion: async (promo) => {
+    try {
+      const res = await api.post('/promotions', promo);
+      set({ promotions: [...get().promotions, res.data] });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
+  updatePromotion: async (id, data) => {
+    try {
+      const res = await api.patch(`/promotions/${id}`, data);
+      set({ promotions: get().promotions.map((p) => p.id === id ? res.data : p) });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
+  deletePromotion: async (id) => {
+    try {
+      await api.delete(`/promotions/${id}`);
+      set({ promotions: get().promotions.filter((p) => p.id !== id) });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  }
 }));

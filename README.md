@@ -67,17 +67,23 @@ git clone https://github.com/Nakarin1997/pos-online.git
 cd pos-online
 ```
 
-### 2. รันส่วนของ Frontend
+### 2. เตรียมฐานข้อมูล PostgreSQL
+
+รันเฉพาะฐานข้อมูลผ่าน Docker Compose ก่อนการรันแอปพลิเคชัน:
+
+```bash
+docker-compose up -d pos-db
+```
+
+### 3. รันส่วนของ Frontend
 
 ```bash
 cd frontend
 
-# หากใช้ npm
-npm install
-npm run dev
-
-# หากมี Bun
+# ติดตั้ง dependencies
 bun install
+
+# รัน Development Server
 bun run dev
 ```
 
@@ -85,23 +91,28 @@ bun run dev
 > **ข้อมูลสำหรับทดสอบล็อกอิน (Demo Account):**
 > อีเมล: admin@pos.com (หรือกรอกเบอร์ PIN: `1111`)
 
-### 3. รันส่วนของ Backend (กำลังพัฒนา)
+### 4. รันส่วนของ Backend
 
 ```bash
 cd backend
 
-# หากใช้ npm
-npm install
-npm run start:dev
+# ติดตั้ง dependencies
+bun install
+
+# ซิงค์ Prisma Schema ไปยังฐานข้อมูล
+bunx prisma db push
+
+# รัน Development Server
+bun run start:dev
 ```
 
-### 🐳 4. รันผ่าน Docker (แนะนำสำหรับการ Deploy)
+### 🐳 5. รันทุกอย่างผ่าน Docker (สำหรับ Production / Deployment)
 
-โปรเจกต์นี้รองรับการรันผ่าน Docker Compose เพื่อความเร็วและความสะดวกในการ Deployment ทั้งระบบ Frontend และ Backend ในคำสั่งเดียว
+หากต้องการรันแอปพลิเคชันทั้งหมดผ่าน Docker Compose สามารถทำได้ผ่านคำสั่งเดียว:
 
 ```bash
 # รันระบบเบื้องหลัง (Detached mode)
-docker-compose up -d
+docker-compose up -d --build
 
 # ดู Log การทำงานของระบบ
 docker-compose logs -f
