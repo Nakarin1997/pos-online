@@ -10,7 +10,10 @@ import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private prisma: PrismaService, private settingsService: SettingsService) {}
+  constructor(
+    private prisma: PrismaService,
+    private settingsService: SettingsService,
+  ) {}
 
   async create(createMemberDto: CreateMemberDto) {
     const existing = await this.prisma.member.findUnique({
@@ -18,9 +21,12 @@ export class MembersService {
     });
     if (existing) throw new ConflictException('Phone number already exists');
 
-    const bonusPointsStr = await this.settingsService.getSettingValue('SIGNUP_BONUS_POINTS');
-    const expiryDaysStr = await this.settingsService.getSettingValue('POINT_EXPIRY_DAYS');
-    
+    const bonusPointsStr = await this.settingsService.getSettingValue(
+      'SIGNUP_BONUS_POINTS',
+    );
+    const expiryDaysStr =
+      await this.settingsService.getSettingValue('POINT_EXPIRY_DAYS');
+
     const bonusPoints = parseInt(bonusPointsStr, 10) || 0;
     const expiryDays = parseInt(expiryDaysStr, 10) || 365;
 

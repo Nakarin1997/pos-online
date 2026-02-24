@@ -100,7 +100,9 @@ export class OrdersService {
               case 'MIN_CART_TOTAL':
                 return subtotal.gte(cond.value || 0);
               case 'MIN_ITEM_QTY': {
-                const item = dto.items.find((i) => i.productId === cond.productId);
+                const item = dto.items.find(
+                  (i) => i.productId === cond.productId,
+                );
                 return item && item.quantity >= Number(cond.value);
               }
               case 'SPECIFIC_ITEM':
@@ -129,7 +131,9 @@ export class OrdersService {
                   );
                   break;
                 case 'FIXED_PRICE': {
-                  const item = dto.items.find((i) => i.productId === reward.productId);
+                  const item = dto.items.find(
+                    (i) => i.productId === reward.productId,
+                  );
                   if (item) {
                     const diff = new Prisma.Decimal(item.unitPrice)
                       .sub(reward.value)
@@ -164,18 +168,20 @@ export class OrdersService {
       // --- POINT CALCULATION (EARN) ---
       let earnedPoints = 0;
       let expiresAt: Date | undefined;
-      
+
       if (dto.memberId) {
-        const pointsPerThbStr = await this.settings.getSettingValue('POINTS_PER_THB');
-        const expiryDaysStr = await this.settings.getSettingValue('POINT_EXPIRY_DAYS');
-        
+        const pointsPerThbStr =
+          await this.settings.getSettingValue('POINTS_PER_THB');
+        const expiryDaysStr =
+          await this.settings.getSettingValue('POINT_EXPIRY_DAYS');
+
         const pointsPerThb = parseFloat(pointsPerThbStr) || 100;
         const expiryDays = parseInt(expiryDaysStr, 10) || 365;
-        
+
         if (pointsPerThb > 0) {
           earnedPoints = Math.floor(total.toNumber() / pointsPerThb);
         }
-        
+
         if (expiryDays > 0) {
           expiresAt = new Date();
           expiresAt.setDate(expiresAt.getDate() + expiryDays);
@@ -187,7 +193,9 @@ export class OrdersService {
       const pointTxsToUpdate: { id: string; balance: number }[] = [];
 
       if (dto.memberId && pointsToRedeem > 0) {
-        const member = await tx.member.findUnique({ where: { id: dto.memberId } });
+        const member = await tx.member.findUnique({
+          where: { id: dto.memberId },
+        });
         if (!member || member.points < pointsToRedeem) {
           throw new BadRequestException('Insufficient points to redeem');
         }
@@ -207,11 +215,16 @@ export class OrdersService {
           if (remainingToDeduct <= 0) break;
           const deduction = Math.min(ptTx.balance, remainingToDeduct);
           remainingToDeduct -= deduction;
-          pointTxsToUpdate.push({ id: ptTx.id, balance: ptTx.balance - deduction });
+          pointTxsToUpdate.push({
+            id: ptTx.id,
+            balance: ptTx.balance - deduction,
+          });
         }
 
         if (remainingToDeduct > 0) {
-          throw new BadRequestException('Not enough unexpired points available');
+          throw new BadRequestException(
+            'Not enough unexpired points available',
+          );
         }
       }
 

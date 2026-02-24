@@ -7,9 +7,9 @@ export class SettingsService {
 
   // App Default Settings
   private defaultSettings = [
-    { key: 'POINTS_PER_THB', value: '100' },          // 100 THB = 1 Point
-    { key: 'POINT_EXPIRY_DAYS', value: '365' },       // Points expire in 1 year
-    { key: 'SIGNUP_BONUS_POINTS', value: '50' },      // 50 Points for new members
+    { key: 'POINTS_PER_THB', value: '100' }, // 100 THB = 1 Point
+    { key: 'POINT_EXPIRY_DAYS', value: '365' }, // Points expire in 1 year
+    { key: 'SIGNUP_BONUS_POINTS', value: '50' }, // 50 Points for new members
   ];
 
   async getSettings() {
@@ -18,7 +18,9 @@ export class SettingsService {
 
     // Merge with defaults
     return this.defaultSettings.reduce((acc: Record<string, string>, curr) => {
-      acc[curr.key] = settingsMap.has(curr.key) ? (settingsMap.get(curr.key) as string) : curr.value;
+      acc[curr.key] = settingsMap.has(curr.key)
+        ? (settingsMap.get(curr.key) as string)
+        : curr.value;
       return acc;
     }, {});
   }
@@ -31,7 +33,7 @@ export class SettingsService {
         create: { key, value },
       });
     });
-    
+
     await Promise.all(promises);
     return this.getSettings();
   }
@@ -39,9 +41,9 @@ export class SettingsService {
   async getSettingValue(key: string): Promise<string> {
     const record = await this.prisma.setting.findUnique({ where: { key } });
     if (record) return record.value;
-    
+
     // Fallback to default
-    const def = this.defaultSettings.find(s => s.key === key);
+    const def = this.defaultSettings.find((s) => s.key === key);
     return def ? def.value : '';
   }
 }
