@@ -55,10 +55,20 @@ export const useAuthStore = create<AuthStore>((set) => ({
 // Initialize from localStorage on client
 if (typeof window !== 'undefined') {
   const stored = localStorage.getItem('pos_user');
-  if (stored) {
+  const token = localStorage.getItem('pos_token');
+
+  if (stored && token) {
     try {
       const user = JSON.parse(stored) as AuthUser;
       useAuthStore.setState({ user, isAuthenticated: true });
     } catch {}
+  } else {
+    localStorage.removeItem('pos_user');
+    localStorage.removeItem('pos_token');
+    useAuthStore.setState({ user: null, isAuthenticated: false });
   }
+
+  window.addEventListener('pos:unauthorized', () => {
+    useAuthStore.setState({ user: null, isAuthenticated: false, error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' });
+  });
 }

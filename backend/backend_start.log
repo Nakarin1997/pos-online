@@ -135,3 +135,4 @@ $ nest start --watch
 [32m[Nest] 53756  - [39m02/21/2026, 9:26:12 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/promotions/:id, DELETE} route[39m[38;5;3m +0ms[39m
 [32m[Nest] 53756  - [39m02/21/2026, 9:26:12 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +15ms[39m
 🚀 POS Backend running on http://localhost:3002
+error: script "start:dev" was terminated by signal SIGHUP (Terminal hung up)
