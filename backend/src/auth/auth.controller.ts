@@ -26,6 +26,11 @@ export class AuthController {
     return this.authService.seedAdmin();
   }
 
+  @Post('seed-demo')
+  seedDemoUsers() {
+    return this.authService.seedDemoUsers();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req: any) {

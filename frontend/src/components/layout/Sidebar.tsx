@@ -68,7 +68,7 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[72px] glass-strong flex flex-col items-center py-6 z-50 overflow-y-auto">
+    <aside className="fixed left-0 top-0 h-screen w-[72px] glass-strong flex flex-col items-center pt-6 pb-20 z-50 overflow-y-auto no-scrollbar">
       {/* Logo */}
       <div className="mb-6 flex items-center justify-center w-11 h-11 rounded-xl bg-primary glow-primary">
         <Store className="w-6 h-6 text-white" />

@@ -12,7 +12,7 @@ const roleInfo: Record<UserRole, { label: string; icon: React.ElementType; color
 };
 
 const quickAccess = [
-  { email: "admin@pos.com", password: "admin123", label: "Admin", role: "ADMIN" as UserRole },
+  { email: "admin@pos.com", password: "1111", label: "Admin", role: "ADMIN" as UserRole },
   { email: "cashier@pos.com", password: "cashier123", label: "Cashier", role: "CASHIER" as UserRole },
   { email: "manager@pos.com", password: "manager123", label: "Manager", role: "MANAGER" as UserRole },
 ];
@@ -166,6 +166,7 @@ export default function LoginPage() {
                 return (
                   <button
                     key={acc.role}
+                    type="button"
                     onClick={() => handleQuickLogin(acc)}
                     disabled={isLoading}
                     className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-surface-hover transition-all group disabled:opacity-50"

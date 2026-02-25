@@ -5,10 +5,10 @@ import { Plus, Edit2, Trash2, Search, X, Check, Award, Phone } from "lucide-reac
 import { useMemberStore, Member, MemberTier } from "@/stores/memberStore";
 
 const tierColors: Record<MemberTier, { text: string; bg: string }> = {
-  BASIC: { text: "text-slate-600", bg: "bg-slate-100" },
-  SILVER: { text: "text-slate-500", bg: "bg-slate-200" },
-  GOLD: { text: "text-amber-600", bg: "bg-amber-100" },
-  PLATINUM: { text: "text-purple-600", bg: "bg-purple-100" },
+  BASIC: { text: "text-[#b08d57]", bg: "bg-[#b08d57]/20" }, // Bronze color for Basic
+  SILVER: { text: "text-[#94a3b8]", bg: "bg-[#94a3b8]/20" }, // Silver color
+  GOLD: { text: "text-[#fbbf24]", bg: "bg-[#fbbf24]/20" },   // Gold color
+  PLATINUM: { text: "text-[#38bdf8]", bg: "bg-[#38bdf8]/20" }, // Platinum/Blue color
 };
 
 const defaultForm: Omit<Member, 'id' | 'points' | 'tier' | 'totalSpent' | 'lastVisit' | 'createdAt'> = {

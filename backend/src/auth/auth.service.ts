@@ -56,4 +56,37 @@ export class AuthService {
     });
     return { message: 'Admin created', email: admin.email };
   }
+
+  // Seed demo cashier and manager for demo purposes
+  async seedDemoUsers() {
+    const usersCreated = [];
+    const demoUsers = [
+      { name: 'Demo Cashier', email: 'cashier@pos.com', password: 'cashier123', role: 'CASHIER' },
+      { name: 'Demo Manager', email: 'manager@pos.com', password: 'manager123', role: 'MANAGER' },
+    ] as const;
+
+    for (const demoUser of demoUsers) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: demoUser.email },
+      });
+
+      if (!existingUser) {
+        const hashedPassword = await bcrypt.hash(demoUser.password, 10);
+        const newUser = await this.prisma.user.create({
+          data: {
+            name: demoUser.name,
+            email: demoUser.email,
+            password: hashedPassword,
+            role: demoUser.role,
+          },
+        });
+        usersCreated.push(newUser.email);
+      }
+    }
+
+    if (usersCreated.length > 0) {
+      return { message: `Demo users created`, emails: usersCreated };
+    }
+    return { message: 'Demo users already exist' };
+  }
 }
